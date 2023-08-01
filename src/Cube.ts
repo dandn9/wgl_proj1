@@ -7,6 +7,7 @@ export class Cube {
 	geometry: Geometry
 	vertex_color: Float32Array
 	centered: boolean
+	vertexCount = 36
 
 	constructor(size: number = 1, centered = true, vertex_color?: Float32Array) {
 		this.size = size

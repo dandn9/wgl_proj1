@@ -1,8 +1,9 @@
 import './style.css'
 import { M4 } from './M4'
-import { m4 } from 'twgl.js'
 import { Cube } from './Cube'
 import { Camera } from './Camera'
+import { bindAttribute } from './utils'
+import { Vec3 } from './Vec3'
 
 const vertexShaderSource = `#version 300 es
 in vec4 a_pos;
@@ -60,9 +61,6 @@ function main() {
 		const info = gl.getProgramInfoLog(program)
 		throw `Could not compile WebGL program. \n\n${info}`
 	}
-
-	const aPosLocation = gl.getAttribLocation(program, 'a_pos')
-	const aColorLocation = gl.getAttribLocation(program, 'a_color')
 	const viewProjectionMatrixLocation = gl.getUniformLocation(
 		program,
 		'u_viewProjectionMatrix'
@@ -72,27 +70,15 @@ function main() {
 	const vao = gl.createVertexArray()
 	gl.bindVertexArray(vao)
 
+	const objects: Cube[] = []
 	const cube = new Cube(2)
-	console.log(cube)
+	objects.push(cube)
+	const cube2 = new Cube(2)
+	objects.push(cube2)
 
 	const camera = new Camera()
 
-	{
-		const buffer = gl.createBuffer()!
-		gl.bindBuffer(gl.ARRAY_BUFFER, buffer)
-		gl.bufferData(gl.ARRAY_BUFFER, cube.geometry.toFloat32Array(), gl.STATIC_DRAW)
-
-		gl.enableVertexAttribArray(aPosLocation)
-		gl.vertexAttribPointer(aPosLocation, 3, gl.FLOAT, false, 0, 0)
-	}
-	{
-		const buffer = gl.createBuffer()!
-		gl.bindBuffer(gl.ARRAY_BUFFER, buffer)
-		gl.bufferData(gl.ARRAY_BUFFER, cube.vertex_color, gl.STATIC_DRAW)
-
-		gl.enableVertexAttribArray(aColorLocation)
-		gl.vertexAttribPointer(aColorLocation, 3, gl.FLOAT, false, 0, 0)
-	}
+	cube2.translateY(5)
 
 	gl.useProgram(program)
 
@@ -105,14 +91,16 @@ function main() {
 		canvas.height = canvas.clientHeight
 
 		console.log(deltaTime)
-		cube.rotateX(deltaTime * 0.001)
-		cube.rotateY(deltaTime * 0.001)
 		const projectionMatrix = M4.perspective(
 			Math.PI / 2,
 			canvas.width / canvas.height,
 			1,
 			2000
 		)
+
+		camera.m4 = M4.rotationY(Math.PI * 0.1)
+		camera.translate(0, 50, Math.PI * 0.1)
+		camera.m4 = M4.lookAt(camera.pos, new Vec3(cube.m4.w0, cube.m4.w1, cube.m4.w2))
 		const viewMatrix = M4.inverse(camera.m4)
 		const viewProjectionMatrix = M4.multiplyM4(projectionMatrix, viewMatrix)
 		gl.uniformMatrix4fv(
@@ -120,7 +108,6 @@ function main() {
 			false,
 			viewProjectionMatrix.toFloat32Array()
 		)
-		gl.uniformMatrix4fv(worldMatrixLocation, false, cube.m4.toFloat32Array())
 		// convert clipspace to pixel
 		gl.viewport(0, 0, canvas.width, canvas.height)
 		// clear the canvas
@@ -131,8 +118,19 @@ function main() {
 		gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT)
 
 		gl.bindVertexArray(vao)
+		bindAttribute(gl, program, 'a_pos', cube.geometry.toFloat32Array())
+		bindAttribute(gl, program, 'a_color', cube.vertex_color)
+		for (let i = 0; i < objects.length; ++i) {
+			objects[i].rotateX(deltaTime * 0.001 + i * 0.01)
+			objects[i].rotateY(deltaTime * 0.001 + i * 0.01)
+			gl.uniformMatrix4fv(
+				worldMatrixLocation,
+				false,
+				objects[i].m4.toFloat32Array()
+			)
 
-		gl.drawArrays(gl.TRIANGLES, 0, cube.geometry.components.length * 3)
+			gl.drawArrays(gl.TRIANGLES, 0, objects[i].vertexCount)
+		}
 		requestAnimationFrame(draw)
 	}
 	requestAnimationFrame(draw)

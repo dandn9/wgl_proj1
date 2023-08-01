@@ -19,6 +19,37 @@ export class Vec3 {
 		this.x = nx
 		this.y = ny
 		this.z = nz
+
+		return this
+	}
+	static cross(a: Vec3, b: Vec3) {
+		return new Vec3(
+			a.y * b.z - a.z * b.y,
+			a.z * b.x - a.x * b.z,
+			a.x * b.y - a.y * b.x
+		)
+	}
+	subtractV3(v3: Vec3) {
+		this.x = this.x - v3.x
+		this.y = this.y - v3.y
+		this.z = this.z - v3.z
+
+		return this
+	}
+	normalize() {
+		const length = this.x + this.y + this.z
+
+		if (length > 0.00001) {
+			this.x = this.x / length
+			this.y = this.y / length
+			this.z = this.z / length
+		} else {
+			this.x = 0
+			this.y = 0
+			this.z = 0
+		}
+
+		return this
 	}
 	public copy() {
 		return new Vec3(this.x, this.y, this.z)

@@ -1,4 +1,5 @@
 import { M4 } from './M4'
+import { Vec3 } from './Vec3'
 
 export class Camera {
 	m4: M4
@@ -7,12 +8,16 @@ export class Camera {
 
 	constructor() {
 		// by default the camera is a bit distant so that it can see objects on the origin
-		this.m4 = M4.translate(0, 0, 10)
+		this.m4 = M4.identity()
 		this.canvas = document.querySelector('#main-canvas') as HTMLCanvasElement
 		this.isEngaged = false
 
 		this.setupCameraEvents()
 	}
+	get pos() {
+		return new Vec3(this.m4.w0, this.m4.w1, this.m4.w2)
+	}
+
 	setupCameraEvents() {
 		console.log(this.canvas)
 		window.addEventListener('keypress', (ev) => {

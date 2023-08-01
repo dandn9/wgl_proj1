@@ -1,3 +1,5 @@
+import { Vec3 } from './Vec3'
+
 /**
  * x0 y0 z0 w0
  * x1 y1 z1 w1
@@ -135,6 +137,20 @@ export class M4 {
       0, 1, 0, 0,
       s, 0, c, 0,
       0, 0, 0, 1)
+	}
+
+	static lookAt(cameraPos: Vec3, target: Vec3, up = new Vec3(0, 1, 0)) {
+		const zAxis = cameraPos.copy()
+		zAxis.subtractV3(target).normalize()
+		const xAxis = Vec3.cross(up, zAxis).normalize()
+		const yAxis = Vec3.cross(zAxis, xAxis).normalize()
+
+		// prettier-ignore
+		return new M4(
+			xAxis.x, xAxis.y, xAxis.z, 0,
+			yAxis.x, yAxis.y, yAxis.z, 0,
+			zAxis.x, zAxis.y, zAxis.z, 0,
+			cameraPos.x, cameraPos.y, cameraPos.z,1)
 	}
 	static rotationZ(angle: number) {
 		/**
