@@ -37,12 +37,14 @@ export class Vec3 {
 		return this
 	}
 	normalize() {
-		const length = this.x + this.y + this.z
+		// we square it so we get the abs len
+		const lenSq = this.x * this.x + this.y * this.y + this.z * this.z
+		const len = Math.sqrt(lenSq)
 
-		if (length > 0.00001) {
-			this.x = this.x / length
-			this.y = this.y / length
-			this.z = this.z / length
+		if (len > 0.00001) {
+			this.x = this.x / len
+			this.y = this.y / len
+			this.z = this.z / len
 		} else {
 			this.x = 0
 			this.y = 0

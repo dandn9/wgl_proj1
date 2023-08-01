@@ -77,13 +77,20 @@ function main() {
 	objects.push(cube2)
 
 	const camera = new Camera()
+	camera.translateZ(10)
 
 	cube2.translateY(5)
+
+	// set attributes
+
+	bindAttribute(gl, program, 'a_pos', cube.geometry.toFloat32Array())
+	bindAttribute(gl, program, 'a_color', cube.vertex_color)
 
 	gl.useProgram(program)
 
 	let previous = 0
 	let deltaTime = 0
+
 	const draw = (t: number) => {
 		deltaTime = t - previous
 		previous = t
@@ -98,11 +105,12 @@ function main() {
 			2000
 		)
 
-		camera.m4 = M4.rotationY(Math.PI * 0.1)
-		camera.translate(0, 50, Math.PI * 0.1)
 		camera.m4 = M4.lookAt(camera.pos, new Vec3(cube.m4.w0, cube.m4.w1, cube.m4.w2))
+		console.log(camera)
 		const viewMatrix = M4.inverse(camera.m4)
+		console.log(viewMatrix)
 		const viewProjectionMatrix = M4.multiplyM4(projectionMatrix, viewMatrix)
+
 		gl.uniformMatrix4fv(
 			viewProjectionMatrixLocation,
 			false,
@@ -118,8 +126,6 @@ function main() {
 		gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT)
 
 		gl.bindVertexArray(vao)
-		bindAttribute(gl, program, 'a_pos', cube.geometry.toFloat32Array())
-		bindAttribute(gl, program, 'a_color', cube.vertex_color)
 		for (let i = 0; i < objects.length; ++i) {
 			objects[i].rotateX(deltaTime * 0.001 + i * 0.01)
 			objects[i].rotateY(deltaTime * 0.001 + i * 0.01)
