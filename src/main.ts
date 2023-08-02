@@ -8,6 +8,7 @@ import { Vec3 } from './Vec3'
 const vertexShaderSource = `#version 300 es
 in vec4 a_pos;
 in vec4 a_color;
+in vec3 a_normal;
 
 // A matrix to transform the positions by
 uniform mat4 u_worldMatrix;
@@ -16,6 +17,7 @@ out vec4 v_col;
 out vec4 v_worldPosition;
 out vec4 v_pos;
 out vec4 v_translation;
+out vec3 v_normal;
 
 uniform mat4 u_viewProjectionMatrix;
 
@@ -27,6 +29,7 @@ void main(){
 	v_worldPosition = worldPosition;
 	v_pos = a_pos;
 	v_translation = u_worldMatrix[3].xyzw;
+	v_normal = mat3(u_worldMatrix) * a_normal;
 }
 `
 
@@ -34,17 +37,25 @@ const fragmentShaderSource = `#version 300 es
 
 precision highp float;
 out vec4 outColor;
+
+in vec3 v_normal;
 in vec4 v_col;
 in vec4 v_worldPosition;
 in vec4 v_pos;
 in vec4 v_translation;
 
+uniform vec3 u_reverseLightDirection;
+
+
 void main(){
 
-	float mult = dot(v_worldPosition - v_translation, vec4(0, 1, 0, 1));
+  	vec3 normal = normalize(v_normal);
+	float light = dot(normal, u_reverseLightDirection);
 
 
-	outColor = vec4(v_col.xyz * mult,1.0);
+
+	outColor = vec4(v_col.xyz,1.0);
+	outColor.rgb *= light;
 }
 `
 main()
@@ -82,6 +93,10 @@ function main() {
 		'u_viewProjectionMatrix'
 	)
 	const worldMatrixLocation = gl.getUniformLocation(program, 'u_worldMatrix')
+	const reverseLightDirectionLocation = gl.getUniformLocation(
+		program,
+		'u_reverseLightDirection'
+	)
 
 	const vao = gl.createVertexArray()
 	gl.bindVertexArray(vao)
@@ -95,12 +110,15 @@ function main() {
 	const camera = new Camera()
 	camera.translateZ(10)
 
+	const lightDirection = new Float32Array([1, -1, 0.2])
+
 	cube2.translateY(8)
 
 	// set attributes
 
 	bindAttribute(gl, program, 'a_pos', cube.geometry.toFloat32Array())
 	bindAttribute(gl, program, 'a_color', cube.vertex_color)
+	bindAttribute(gl, program, 'a_normal', cube.normals.toFloat32Array())
 
 	gl.useProgram(program)
 
@@ -132,6 +150,7 @@ function main() {
 			false,
 			viewProjectionMatrix.toFloat32Array()
 		)
+		gl.uniform3fv(reverseLightDirectionLocation, lightDirection)
 		// convert clipspace to pixel
 		gl.viewport(0, 0, canvas.width, canvas.height)
 		// clear the canvas
@@ -153,6 +172,11 @@ function main() {
 
 			gl.drawArrays(gl.TRIANGLES, 0, objects[i].vertexCount)
 		}
+		console.log(
+			new Vec3(lightDirection[0], lightDirection[1], lightDirection[2]).dot(
+				new Vec3(0, 1, 0)
+			)
+		)
 		requestAnimationFrame(draw)
 	}
 	requestAnimationFrame(draw)

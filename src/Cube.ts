@@ -5,16 +5,23 @@ export class Cube {
 	m4: M4
 	size: number
 	geometry: Geometry
+	normals: Geometry
 	vertex_color: Float32Array
 	centered: boolean
 	vertexCount = 36
 
-	constructor(size: number = 1, centered = true, vertex_color?: Float32Array) {
+	constructor(
+		size: number = 1,
+		centered = true,
+		vertex_color?: Float32Array,
+		normals?: Geometry
+	) {
 		this.size = size
 		this.centered = centered
 
 		this.geometry = this.createCubeGeometry(size)
 		this.vertex_color = vertex_color ?? this.defaultVertexColors()
+		this.normals = normals ?? this.defaultNormals()
 
 		this.m4 = M4.identity()
 	}
@@ -36,6 +43,52 @@ export class Cube {
 	}
 	public rotateX(d: number) {
 		this.m4 = M4.multiplyM4(this.m4, M4.rotationX(d))
+	}
+	private defaultNormals() {
+		// prettier-ignore
+		return new Geometry([
+			0,0,1,
+			0,0,1,
+			0,0,1,
+			0,0,1,
+			0,0,1,
+			0,0,1,
+
+			-1,0,0,
+			-1,0,0,
+			-1,0,0,
+			-1,0,0,
+			-1,0,0,
+			-1,0,0,
+
+			0,-1,0,
+			0,-1,0,
+			0,-1,0,
+			0,-1,0,
+			0,-1,0,
+			0,-1,0,
+
+			1,0,0,
+			1,0,0,
+			1,0,0,
+			1,0,0,
+			1,0,0,
+			1,0,0,
+
+			0,1,0,
+			0,1,0,
+			0,1,0,
+			0,1,0,
+			0,1,0,
+			0,1,0,
+
+			0,0,-1,
+			0,0,-1,
+			0,0,-1,
+			0,0,-1,
+			0,0,-1,
+			0,0,-1,
+		])
 	}
 	private defaultVertexColors() {
 		// prettier-ignore

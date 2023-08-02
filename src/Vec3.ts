@@ -36,6 +36,9 @@ export class Vec3 {
 
 		return this
 	}
+	dot(v3: Vec3): number {
+		return this.x * v3.x + this.y * v3.y + this.z * v3.z
+	}
 	normalize() {
 		// we square it so we get the abs len
 		const lenSq = this.x * this.x + this.y * this.y + this.z * this.z
