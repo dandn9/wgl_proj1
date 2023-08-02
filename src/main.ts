@@ -12,6 +12,8 @@ in vec3 a_normal;
 
 // A matrix to transform the positions by
 uniform mat4 u_worldMatrix;
+uniform mat4 u_viewProjectionMatrix;
+
 
 out vec4 v_col;
 out vec4 v_worldPosition;
@@ -19,7 +21,6 @@ out vec4 v_pos;
 out vec4 v_translation;
 out vec3 v_normal;
 
-uniform mat4 u_viewProjectionMatrix;
 
 void main(){
 	vec4 worldPosition = u_worldMatrix * a_pos;
@@ -29,7 +30,9 @@ void main(){
 	v_worldPosition = worldPosition;
 	v_pos = a_pos;
 	v_translation = u_worldMatrix[3].xyzw;
-	v_normal = mat3(u_worldMatrix) * a_normal;
+
+	mat4 worldInverseTranspose = transpose(inverse(u_worldMatrix));
+	v_normal = mat3(worldInverseTranspose) * a_normal;
 }
 `
 
