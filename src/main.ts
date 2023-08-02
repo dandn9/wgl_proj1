@@ -13,11 +13,20 @@ in vec4 a_color;
 uniform mat4 u_worldMatrix;
 
 out vec4 v_col;
+out vec4 v_worldPosition;
+out vec4 v_pos;
+out vec4 v_translation;
+
 uniform mat4 u_viewProjectionMatrix;
 
 void main(){
-	gl_Position =  u_viewProjectionMatrix * u_worldMatrix * a_pos;
+	vec4 worldPosition = u_worldMatrix * a_pos;
+
+	gl_Position =  u_viewProjectionMatrix * worldPosition;
 	v_col = a_color;
+	v_worldPosition = worldPosition;
+	v_pos = a_pos;
+	v_translation = u_worldMatrix[3].xyzw;
 }
 `
 
@@ -26,9 +35,16 @@ const fragmentShaderSource = `#version 300 es
 precision highp float;
 out vec4 outColor;
 in vec4 v_col;
+in vec4 v_worldPosition;
+in vec4 v_pos;
+in vec4 v_translation;
 
 void main(){
-	outColor = vec4(v_col.xyz,1.0);
+
+	float mult = dot(v_worldPosition - v_translation, vec4(0, 1, 0, 1));
+
+
+	outColor = vec4(v_col.xyz * mult,1.0);
 }
 `
 main()
@@ -79,7 +95,7 @@ function main() {
 	const camera = new Camera()
 	camera.translateZ(10)
 
-	cube2.translateY(5)
+	cube2.translateY(8)
 
 	// set attributes
 
