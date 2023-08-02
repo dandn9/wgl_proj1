@@ -328,6 +328,16 @@ export class M4 {
 					(tmp_20 * ty2 + tmp_23 * tz2 + tmp_17 * tx2))
 		)
 	}
+	static transpose(m4: M4) {
+		// swaps columns for rows
+		// prettier-ignore
+		return new M4(
+			m4.x0, m4.y0, m4.z0, m4.w0,
+			m4.x1, m4.y1, m4.z1, m4.w1,
+			m4.x2, m4.y2, m4.z2, m4.w2,
+			m4.x3, m4.y3, m4.z3, m4.w3,
+			)
+	}
 
 	static perspective(fieldOfView: number, aspect: number, zNear: number, zFar: number) {
 		const f = Math.tan(Math.PI * 0.5 - fieldOfView * 0.5)

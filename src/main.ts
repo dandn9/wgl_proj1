@@ -113,7 +113,7 @@ function main() {
 	const camera = new Camera()
 	camera.translateZ(10)
 
-	const lightDirection = new Float32Array([1, -1, 0.2])
+	const lightDirection = new Float32Array([0, 1, 0.2])
 
 	cube2.translateY(8)
 
