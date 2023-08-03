@@ -17,6 +17,7 @@ uniform mat4 u_worldMatrix;
 uniform mat4 u_viewProjectionMatrix;
 
 
+
 out vec4 v_col;
 out vec4 v_worldPosition;
 out vec4 v_pos;
@@ -50,14 +51,21 @@ in vec4 v_pos;
 in vec4 v_translation;
 
 uniform vec3 u_reverseLightDirection;
+uniform vec3 u_pointlightPosition;
 
 
 void main(){
 
   	vec3 normal = normalize(v_normal);
+	vec3 surfaceToLight = u_pointlightPosition - vec3(v_worldPosition);
+	surfaceToLight = normalize(surfaceToLight);
+	float pointlight = dot(normal, surfaceToLight);
+	
+
 	float light = dot(normal, u_reverseLightDirection);
 	outColor = vec4(v_col.xyz,1.0);
 	outColor.rgb *= light;
+	outColor.rgb *= pointlight;
 }
 `
 main()
@@ -99,6 +107,13 @@ function main() {
 		program,
 		'u_reverseLightDirection'
 	)
+	const pointLightPositionLocation = gl.getUniformLocation(
+		program,
+		'u_pointlightPosition'
+	)
+	window.addEventListener('unload', () => {
+		console.log('UNLOAD')
+	})
 
 	const vao = gl.createVertexArray()
 	gl.bindVertexArray(vao)
@@ -116,6 +131,15 @@ function main() {
 
 	const camera = new Camera()
 	camera.translateZ(10)
+	const savedCamera = localStorage.getItem('cameraM4')
+
+	if (savedCamera) {
+		camera.m4 = JSON.parse(savedCamera)
+	}
+
+	window.addEventListener('unload', () => {
+		localStorage.setItem('cameraM4', JSON.stringify(camera.m4))
+	})
 
 	const lightDirection = new Float32Array([0, 1, 0.2])
 
@@ -172,6 +196,7 @@ function main() {
 			false,
 			viewProjectionMatrix.toFloat32Array()
 		)
+		gl.uniform3fv(pointLightPositionLocation, new Vec3(0, 1, 0))
 		gl.uniform3fv(reverseLightDirectionLocation, lightDirection)
 		// convert clipspace to pixel
 		gl.viewport(0, 0, canvas.width, canvas.height)
