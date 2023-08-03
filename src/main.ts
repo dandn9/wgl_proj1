@@ -4,6 +4,8 @@ import { Cube } from './Cube'
 import { Camera } from './Camera'
 import { bindAttribute } from './utils'
 import { Vec3 } from './Vec3'
+import { Plane } from './Plane'
+import { Primitive } from './Primitive'
 
 const vertexShaderSource = `#version 300 es
 in vec4 a_pos;
@@ -54,9 +56,6 @@ void main(){
 
   	vec3 normal = normalize(v_normal);
 	float light = dot(normal, u_reverseLightDirection);
-
-
-
 	outColor = vec4(v_col.xyz,1.0);
 	outColor.rgb *= light;
 }
@@ -104,11 +103,16 @@ function main() {
 	const vao = gl.createVertexArray()
 	gl.bindVertexArray(vao)
 
-	const objects: Cube[] = []
+	const objects: Primitive[] = []
 	const cube = new Cube(2)
 	objects.push(cube)
 	const cube2 = new Cube(2)
 	objects.push(cube2)
+
+	const plane = new Plane(10, 10)
+	objects.push(plane)
+	plane.translateY(-4)
+	plane.rotateZ(0.2)
 
 	const camera = new Camera()
 	camera.translateZ(10)
@@ -119,9 +123,24 @@ function main() {
 
 	// set attributes
 
-	bindAttribute(gl, program, 'a_pos', cube.geometry.toFloat32Array())
-	bindAttribute(gl, program, 'a_color', cube.vertex_color)
-	bindAttribute(gl, program, 'a_normal', cube.normals.toFloat32Array())
+	const { buffer: posBuffer } = bindAttribute(
+		gl,
+		program,
+		'a_pos',
+		cube.geometry.toFloat32Array()
+	)
+	const { buffer: colorBuffer } = bindAttribute(
+		gl,
+		program,
+		'a_color',
+		cube.vertexData.toFloat32Array()
+	)
+	const { buffer: normalBuffer } = bindAttribute(
+		gl,
+		program,
+		'a_normal',
+		cube.normals.toFloat32Array()
+	)
 
 	gl.useProgram(program)
 
@@ -165,8 +184,29 @@ function main() {
 
 		gl.bindVertexArray(vao)
 		for (let i = 0; i < objects.length; ++i) {
-			objects[i].rotateX(deltaTime * 0.001 + i * 0.01)
-			objects[i].rotateY(deltaTime * 0.001 + i * 0.01)
+			if (objects[i] instanceof Cube) {
+				objects[i].rotateX(deltaTime * 0.001 + i * 0.01)
+				objects[i].rotateY(deltaTime * 0.001 + i * 0.01)
+			}
+			gl.bindBuffer(gl.ARRAY_BUFFER, posBuffer)
+			gl.bufferData(
+				gl.ARRAY_BUFFER,
+				objects[i].geometry.toFloat32Array(),
+				gl.STATIC_DRAW
+			)
+			gl.bindBuffer(gl.ARRAY_BUFFER, colorBuffer)
+			gl.bufferData(
+				gl.ARRAY_BUFFER,
+				objects[i].vertexData.toFloat32Array(),
+				gl.STATIC_DRAW
+			)
+			gl.bindBuffer(gl.ARRAY_BUFFER, normalBuffer)
+			gl.bufferData(
+				gl.ARRAY_BUFFER,
+				objects[i].normals.toFloat32Array(),
+				gl.STATIC_DRAW
+			)
+
 			gl.uniformMatrix4fv(
 				worldMatrixLocation,
 				false,

@@ -12,5 +12,7 @@ export function bindAttribute(
 	gl.enableVertexAttribArray(location)
 	gl.vertexAttribPointer(location, 3, gl.FLOAT, false, 0, 0)
 
+	return { buffer }
+
 	// gl.bufferData(gl.ARRAY_BUFFER, cube)
 }

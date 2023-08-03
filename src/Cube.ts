@@ -1,28 +1,23 @@
 import { Geometry } from './Geometry'
 import { M4 } from './M4'
+import { Primitive } from './Primitive'
 
-export class Cube {
+export class Cube extends Primitive {
 	m4: M4
 	size: number
-	geometry: Geometry
-	normals: Geometry
-	vertex_color: Float32Array
-	centered: boolean
 	vertexCount = 36
+	declare vertexData: Geometry
+	declare geometry: Geometry
+	declare normals: Geometry
 
-	constructor(
-		size: number = 1,
-		centered = true,
-		vertex_color?: Float32Array,
-		normals?: Geometry
-	) {
+	constructor(size: number = 1) {
+		super(
+			Cube.defaultCubeGeometry(size),
+			Cube.defaultNormals(),
+			Cube.defaultVertexColors(),
+			36
+		)
 		this.size = size
-		this.centered = centered
-
-		this.geometry = this.createCubeGeometry(size)
-		this.vertex_color = vertex_color ?? this.defaultVertexColors()
-		this.normals = normals ?? this.defaultNormals()
-
 		this.m4 = M4.identity()
 	}
 	public translateX(tx: number) {
@@ -44,7 +39,7 @@ export class Cube {
 	public rotateX(d: number) {
 		this.m4 = M4.multiplyM4(this.m4, M4.rotationX(d))
 	}
-	private defaultNormals() {
+	private static defaultNormals() {
 		// prettier-ignore
 		return new Geometry([
 			0,0,1,
@@ -90,9 +85,9 @@ export class Cube {
 			0,0,-1,
 		])
 	}
-	private defaultVertexColors() {
+	private static defaultVertexColors() {
 		// prettier-ignore
-		return new Float32Array([
+		return new Geometry([
             // front face
             1,0,0,
             1,0,0,
@@ -143,7 +138,7 @@ export class Cube {
         ])
 	}
 
-	private createCubeGeometry(s: number) {
+	private static defaultCubeGeometry(s: number) {
 		if (!(s > 0)) throw new Error('Cant create negative length cube')
 
 		// prettier-ignore
@@ -205,9 +200,7 @@ export class Cube {
 	]
 
 		const geom = new Geometry(vertices)
-		if (this.centered) {
-			geom.multiplyM4(M4.translate(-s / 2, -s / 2, s / 2))
-		}
+		geom.multiplyM4(M4.translate(-s / 2, -s / 2, s / 2))
 		return geom
 	}
 }
