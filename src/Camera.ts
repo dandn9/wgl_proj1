@@ -1,14 +1,15 @@
 import { M4 } from './M4'
 import { Vec3 } from './Vec3'
+import { Object3D } from './Object3D'
 
-export class Camera {
-	m4: M4
+export class Camera extends Object3D {
 	canvas: HTMLCanvasElement
 	isEngaged: boolean
+	declare m4: M4
 
 	constructor() {
 		// by default the camera is a bit distant so that it can see objects on the origin
-		this.m4 = M4.identity()
+		super()
 		this.canvas = document.querySelector('#main-canvas') as HTMLCanvasElement
 		this.isEngaged = false
 

@@ -15,6 +15,7 @@ in vec3 a_normal;
 // A matrix to transform the positions by
 uniform mat4 u_worldMatrix;
 uniform mat4 u_viewProjectionMatrix;
+uniform vec3 u_viewWorldPosition;
 
 
 
@@ -23,6 +24,7 @@ out vec4 v_worldPosition;
 out vec4 v_pos;
 out vec4 v_translation;
 out vec3 v_normal;
+out vec3 v_surfaceToView;
 
 
 void main(){
@@ -36,6 +38,8 @@ void main(){
 
 	mat4 worldInverseTranspose = transpose(inverse(u_worldMatrix));
 	v_normal = mat3(worldInverseTranspose) * a_normal;
+
+	v_surfaceToView = u_viewWorldPosition - worldPosition.xyz;
 }
 `
 
@@ -49,6 +53,7 @@ in vec4 v_col;
 in vec4 v_worldPosition;
 in vec4 v_pos;
 in vec4 v_translation;
+in vec3 v_surfaceToView;
 
 uniform vec3 u_reverseLightDirection;
 uniform vec3 u_pointlightPosition;
@@ -60,12 +65,19 @@ void main(){
 	vec3 surfaceToLight = u_pointlightPosition - vec3(v_worldPosition);
 	surfaceToLight = normalize(surfaceToLight);
 	float pointlight = dot(normal, surfaceToLight);
+
+	vec3 surfaceToLightDirection = normalize(surfaceToLight);
+	vec3 surfaceToViewDirection = normalize(v_surfaceToView);
+	vec3 halfVector = normalize(surfaceToLightDirection + surfaceToViewDirection);
+
+	float specular = dot(normal, halfVector);
 	
 
 	float light = dot(normal, u_reverseLightDirection);
 	outColor = vec4(v_col.xyz,1.0);
 	outColor.rgb *= light;
 	outColor.rgb *= pointlight;
+	outColor.rgb += specular;
 }
 `
 main()
@@ -103,10 +115,12 @@ function main() {
 		'u_viewProjectionMatrix'
 	)
 	const worldMatrixLocation = gl.getUniformLocation(program, 'u_worldMatrix')
+
 	const reverseLightDirectionLocation = gl.getUniformLocation(
 		program,
 		'u_reverseLightDirection'
 	)
+	const viewWorldLocation = gl.getUniformLocation(program, 'u_viewWorldPosition')
 	const pointLightPositionLocation = gl.getUniformLocation(
 		program,
 		'u_pointlightPosition'
@@ -196,8 +210,9 @@ function main() {
 			false,
 			viewProjectionMatrix.toFloat32Array()
 		)
-		gl.uniform3fv(pointLightPositionLocation, new Vec3(0, 1, 0))
+		gl.uniform3fv(pointLightPositionLocation, new Vec3(0, 2, 2))
 		gl.uniform3fv(reverseLightDirectionLocation, lightDirection)
+		gl.uniform3fv(viewWorldLocation, camera.translation)
 		// convert clipspace to pixel
 		gl.viewport(0, 0, canvas.width, canvas.height)
 		// clear the canvas
