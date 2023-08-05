@@ -2,7 +2,7 @@ import './style.css'
 import { M4 } from './M4'
 import { Cube } from './Cube'
 import { Camera } from './Camera'
-import { bindAttribute } from './utils'
+import { bindAttribute, degToRad } from './utils'
 import { Vec3 } from './Vec3'
 import { Plane } from './Plane'
 import { Primitive } from './Primitive'
@@ -57,14 +57,17 @@ in vec3 v_surfaceToView;
 
 uniform vec3 u_reverseLightDirection;
 uniform vec3 u_pointlightPosition;
+uniform vec3 u_lightDirection;
+uniform float u_innerLimit;
+uniform float u_outerLimit;
+uniform float u_shininess;
 
 
 void main(){
 
   	vec3 normal = normalize(v_normal);
 	vec3 surfaceToLight = u_pointlightPosition - vec3(v_worldPosition);
-	surfaceToLight = normalize(surfaceToLight);
-	float pointlight = dot(normal, surfaceToLight);
+	float pointlight = dot(normal, normalize(surfaceToLight));
 
 	vec3 surfaceToLightDirection = normalize(surfaceToLight);
 	vec3 surfaceToViewDirection = normalize(v_surfaceToView);
@@ -72,11 +75,28 @@ void main(){
 
 	float specular = dot(normal, halfVector);
 	
+	specular = pow(specular, 300.0);
 
-	float light = dot(normal, u_reverseLightDirection);
+
+	// float light = dot(normal, u_reverseLightDirection);
+
+	specular = 0.0;
+
+	float dotFromDirection = dot(surfaceToLightDirection, -u_lightDirection);
+	// step(a,b)  if (a >= b) 1 else 2 
+	  // inLight will be 1 if we're inside the spotlight and 0 if not
+
+	float limitRange = u_innerLimit - u_outerLimit;
+	float inLight = clamp(( dotFromDirection - u_outerLimit) / limitRange, 0.0, 1.0);
+	float light = inLight * dot(normal, surfaceToLightDirection);
+	specular = inLight * pow(dot(normal, halfVector), u_shininess);
+
+
+
+
 	outColor = vec4(v_col.xyz,1.0);
 	outColor.rgb *= light;
-	outColor.rgb *= pointlight;
+	// outColor.rgb *= pointlight;
 	outColor.rgb += specular;
 }
 `
@@ -125,6 +145,11 @@ function main() {
 		program,
 		'u_pointlightPosition'
 	)
+
+	const lightDirectionLocation = gl.getUniformLocation(program, 'u_lightDirection')
+	const innerLimitLocation = gl.getUniformLocation(program, 'u_innerLimit')
+	const outerLimitLocation = gl.getUniformLocation(program, 'u_outerLimit')
+	const shininessLocation = gl.getUniformLocation(program, 'u_shininess')
 	window.addEventListener('unload', () => {
 		console.log('UNLOAD')
 	})
@@ -210,9 +235,14 @@ function main() {
 			false,
 			viewProjectionMatrix.toFloat32Array()
 		)
-		gl.uniform3fv(pointLightPositionLocation, new Vec3(0, 2, 2))
+		gl.uniform3fv(pointLightPositionLocation, new Vec3(0, 3, 2))
 		gl.uniform3fv(reverseLightDirectionLocation, lightDirection)
 		gl.uniform3fv(viewWorldLocation, camera.translation)
+
+		gl.uniform1f(shininessLocation, 100)
+		gl.uniform1f(outerLimitLocation, degToRad(20))
+		gl.uniform1f(innerLimitLocation, degToRad(10))
+		gl.uniform3fv(lightDirectionLocation, new Vec3(0, -1, 0))
 		// convert clipspace to pixel
 		gl.viewport(0, 0, canvas.width, canvas.height)
 		// clear the canvas

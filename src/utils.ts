@@ -16,3 +16,7 @@ export function bindAttribute(
 
 	// gl.bufferData(gl.ARRAY_BUFFER, cube)
 }
+
+export function degToRad(deg: number) {
+	return (deg * Math.PI) / 180
+}
