@@ -119,8 +119,7 @@ void main(){
 	// step(a,b)  if (a >= b) 1 else 2 
 	  // inLight will be 1 if we're inside the spotlight and 0 if not
 
-	float limitRange = u_innerLimit - u_outerLimit;
-	float inLight = clamp(( dotFromDirection - u_outerLimit) / limitRange, 0.0, 1.0);
+	  float inLight = smoothstep(u_outerLimit, u_innerLimit, dotFromDirection);
 	float light = inLight * dot(normal, surfaceToLightDirection);
 	// specular = inLight * pow(dot(normal, halfVector), u_shininess);
 
@@ -147,12 +146,20 @@ function main() {
 		// vertex shader
 		gl.shaderSource(vertexShader, vertexShaderSource)
 		gl.compileShader(vertexShader)
+		if (!gl.getShaderParameter(vertexShader, gl.COMPILE_STATUS)) {
+			const info = gl.getShaderInfoLog(vertexShader)
+			throw `Could not compile WebGL - vertex shader - program. \n\n${info}`
+		}
 		gl.attachShader(program, vertexShader)
 	}
 	{
 		// fragment shader
 		gl.shaderSource(fragShader, fragmentShaderSource)
 		gl.compileShader(fragShader)
+		if (!gl.getShaderParameter(fragShader, gl.COMPILE_STATUS)) {
+			const info = gl.getShaderInfoLog(fragShader)
+			throw `Could not compile WebGL - fragment shader - program. \n\n${info}`
+		}
 		gl.attachShader(program, fragShader)
 	}
 
