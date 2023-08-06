@@ -7,6 +7,40 @@ import { Vec3 } from './Vec3'
 import { Plane } from './Plane'
 import { Primitive } from './Primitive'
 
+// const vertexShaderSource = `#version 300 es
+// in vec4 a_position;
+// in vec3 a_normal;
+
+// uniform vec3 u_lightWorldPosition;
+// uniform vec3 u_viewWorldPosition;
+
+// uniform mat4 u_world;
+// uniform mat4 u_worldViewProjection;
+// uniform mat4 u_worldInverseTranspose;
+
+// out vec3 v_normal;
+
+// out vec3 v_surfaceToLight;
+// out vec3 v_surfaceToView;
+
+// void main() {
+//   // Multiply the position by the matrix.
+//   gl_Position = u_worldViewProjection * a_position;
+
+//   // orient the normals and pass to the fragment shader
+//   v_normal = mat3(u_worldInverseTranspose) * a_normal;
+
+//   // compute the world position of the surfoace
+//   vec3 surfaceWorldPosition = (u_world * a_position).xyz;
+
+//   // compute the vector of the surface to the light
+//   // and pass it to the fragment shader
+//   v_surfaceToLight = u_lightWorldPosition - surfaceWorldPosition;
+
+//   // compute the vector of the surface to the view/camera
+//   // and pass it to the fragment shader
+//   v_surfaceToView = u_viewWorldPosition - surfaceWorldPosition;
+// }`
 const vertexShaderSource = `#version 300 es
 in vec4 a_pos;
 in vec4 a_color;
@@ -17,15 +51,12 @@ uniform mat4 u_worldMatrix;
 uniform mat4 u_viewProjectionMatrix;
 uniform vec3 u_viewWorldPosition;
 
-
-
 out vec4 v_col;
 out vec4 v_worldPosition;
 out vec4 v_pos;
 out vec4 v_translation;
 out vec3 v_normal;
 out vec3 v_surfaceToView;
-
 
 void main(){
 	vec4 worldPosition = u_worldMatrix * a_pos;
@@ -57,6 +88,7 @@ in vec3 v_surfaceToView;
 
 uniform vec3 u_reverseLightDirection;
 uniform vec3 u_pointlightPosition;
+uniform vec3 u_spotlightPosition;
 uniform vec3 u_lightDirection;
 uniform float u_innerLimit;
 uniform float u_outerLimit;
@@ -82,21 +114,22 @@ void main(){
 
 	specular = 0.0;
 
-	float dotFromDirection = dot(surfaceToLightDirection, -u_lightDirection);
+	vec3 lightDirection = normalize(u_lightDirection);
+	float dotFromDirection = dot(surfaceToLightDirection, lightDirection);
 	// step(a,b)  if (a >= b) 1 else 2 
 	  // inLight will be 1 if we're inside the spotlight and 0 if not
 
 	float limitRange = u_innerLimit - u_outerLimit;
 	float inLight = clamp(( dotFromDirection - u_outerLimit) / limitRange, 0.0, 1.0);
 	float light = inLight * dot(normal, surfaceToLightDirection);
-	specular = inLight * pow(dot(normal, halfVector), u_shininess);
+	// specular = inLight * pow(dot(normal, halfVector), u_shininess);
 
 
 
 
 	outColor = vec4(v_col.xyz,1.0);
 	outColor.rgb *= light;
-	// outColor.rgb *= pointlight;
+	outColor.rgb *= pointlight;
 	outColor.rgb += specular;
 }
 `
@@ -163,7 +196,7 @@ function main() {
 	const cube2 = new Cube(2)
 	objects.push(cube2)
 
-	const plane = new Plane(10, 10)
+	const plane = new Plane(50, 50)
 	objects.push(plane)
 	plane.translateY(-4)
 	plane.rotateZ(0.2)
@@ -235,14 +268,14 @@ function main() {
 			false,
 			viewProjectionMatrix.toFloat32Array()
 		)
-		gl.uniform3fv(pointLightPositionLocation, new Vec3(0, 3, 2))
+		gl.uniform3fv(pointLightPositionLocation, new Vec3(0, 10, 0))
 		gl.uniform3fv(reverseLightDirectionLocation, lightDirection)
 		gl.uniform3fv(viewWorldLocation, camera.translation)
 
 		gl.uniform1f(shininessLocation, 100)
-		gl.uniform1f(outerLimitLocation, degToRad(20))
-		gl.uniform1f(innerLimitLocation, degToRad(10))
-		gl.uniform3fv(lightDirectionLocation, new Vec3(0, -1, 0))
+		gl.uniform1f(outerLimitLocation, Math.cos(degToRad(51)))
+		gl.uniform1f(innerLimitLocation, Math.cos(degToRad(50)))
+		gl.uniform3fv(lightDirectionLocation, new Vec3(0, -1, 0).negate())
 		// convert clipspace to pixel
 		gl.viewport(0, 0, canvas.width, canvas.height)
 		// clear the canvas

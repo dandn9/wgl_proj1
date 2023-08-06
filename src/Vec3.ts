@@ -17,6 +17,12 @@ export class Vec3 {
 		yield this.z
 	}
 
+	negate() {
+		this.x = -this.x
+		this.y = -this.y
+		this.z = -this.z
+		return this
+	}
 	multiplyM4(m: M4) {
 		const nx = this.x * m.x0 + this.y * m.y0 + this.z * m.z0 + 1 * m.w0
 		const ny = this.x * m.x1 + this.y * m.y1 + this.z * m.z1 + 1 * m.w1
